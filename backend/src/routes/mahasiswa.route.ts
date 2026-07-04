@@ -6,24 +6,47 @@ import {
   updateMahasiswa,
   deleteMahasiswa,
 } from "../controllers/mahasiswa.controller";
-import uploadFotoMahasiswa from "../middlewares/upload.middleware";
+
+import upload from "../middlewares/upload.middleware";
+import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/", getAllMahasiswa);
+/**
+ * =====================================
+ * MAHASISWA ROUTES
+ * Base URL : /api/mahasiswa
+ * =====================================
+ */
 
+// Ambil semua data mahasiswa
+router.get(
+  "/",
+  verifyToken,
+  getAllMahasiswa
+);
+
+// Tambah mahasiswa
 router.post(
   "/",
-  uploadFotoMahasiswa.single("foto"),
+  verifyToken,
+  upload.single("foto"),
   createMahasiswa
 );
 
+// Update mahasiswa
 router.put(
   "/:id",
-  uploadFotoMahasiswa.single("foto"),
+  verifyToken,
+  upload.single("foto"),
   updateMahasiswa
 );
 
-router.delete("/:id", deleteMahasiswa);
+// Hapus mahasiswa
+router.delete(
+  "/:id",
+  verifyToken,
+  deleteMahasiswa
+);
 
-export default router;
+export default router; 
