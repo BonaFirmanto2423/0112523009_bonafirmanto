@@ -43,9 +43,15 @@ export const createMahasiswa = async (
   req: Request,
   res: Response
 ) => {
+
+  console.log("===== BODY =====");
+  console.log(req.body);
+
+  console.log("===== FILE =====");
+  console.log(req.file);
+
   try {
     const { nim, nama, prodi_id, angkatan } = req.body;
-
     const foto = req.file ? req.file.filename : null;
 
     const [result]: any = await pool.query(

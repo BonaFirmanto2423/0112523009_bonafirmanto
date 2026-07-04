@@ -9,6 +9,7 @@ import {
 
 import upload from "../middlewares/upload.middleware";
 import { verifyToken } from "../middlewares/auth.middleware";
+import { allowRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 
@@ -49,4 +50,4 @@ router.delete(
   deleteMahasiswa
 );
 
-export default router; 
+export default router;  

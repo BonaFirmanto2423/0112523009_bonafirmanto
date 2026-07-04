@@ -9,7 +9,7 @@ export const verifyToken = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+) => {  
 
   const authHeader = req.headers.authorization;
 

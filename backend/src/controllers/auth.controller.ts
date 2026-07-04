@@ -1,25 +1,21 @@
 import { Request, Response } from "express";
 import pool from "../config/db";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
 
 export const register = async (
   req: Request,
   res: Response
-) => {
+): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({
+      res.status(400).json({
+        success: false,
         message: "Semua field wajib diisi",
       });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        message: "Password minimal 6 karakter",
-      });
+      return;
     }
 
     const [rows]: any = await pool.query(
@@ -28,9 +24,11 @@ export const register = async (
     );
 
     if (rows.length > 0) {
-      return res.status(400).json({
+      res.status(400).json({
+        success: false,
         message: "Email sudah digunakan",
       });
+      return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -38,9 +36,8 @@ export const register = async (
     await pool.query(
       `
       INSERT INTO users
-      (name, email, password, role)
-      VALUES
-      (?, ?, ?, ?)
+      (name,email,password,role)
+      VALUES (?,?,?,?)
       `,
       [
         name,
@@ -51,6 +48,7 @@ export const register = async (
     );
 
     res.status(201).json({
+      success: true,
       message: "Registrasi berhasil",
     });
 
@@ -59,7 +57,8 @@ export const register = async (
     console.error(error);
 
     res.status(500).json({
-      message: "Terjadi kesalahan server",
+      success: false,
+      message: "Server Error",
       error: error.message,
     });
 
@@ -69,15 +68,18 @@ export const register = async (
 export const login = async (
   req: Request,
   res: Response
-) => {
+): Promise<void> => {
+
   try {
 
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
+      res.status(400).json({
+        success: false,
         message: "Email dan password wajib diisi",
       });
+      return;
     }
 
     const [rows]: any = await pool.query(
@@ -95,39 +97,47 @@ export const login = async (
     );
 
     if (rows.length === 0) {
-      return res.status(401).json({
+      res.status(401).json({
+        success: false,
         message: "Email atau password salah",
       });
+      return;
     }
 
     const user = rows[0];
 
-    const match = await bcrypt.compare(
+    const validPassword = await bcrypt.compare(
       password,
       user.password
     );
 
-    if (!match) {
-      return res.status(401).json({
+    if (!validPassword) {
+      res.status(401).json({
+        success: false,
         message: "Email atau password salah",
       });
+      return;
     }
 
-   const secret = process.env.JWT_SECRET || "mysecret";
+    const secret: Secret =
+      process.env.JWT_SECRET || "mysecret";
 
-const token = jwt.sign(
-  {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  },
-  secret,
-  {
-    expiresIn: "2h",
-  } as jwt.SignOptions
-);
+    const options: SignOptions = {
+      expiresIn: "2h",
+    };
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      secret,
+      options
+    );
 
     res.status(200).json({
+      success: true,
       message: "Login berhasil",
       token,
       user: {
@@ -143,9 +153,11 @@ const token = jwt.sign(
     console.error(error);
 
     res.status(500).json({
-      message: "Terjadi kesalahan server",
+      success: false,
+      message: "Server Error",
       error: error.message,
     });
 
   }
+
 };
